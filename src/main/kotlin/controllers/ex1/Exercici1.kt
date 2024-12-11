@@ -1,21 +1,24 @@
 package org.example.controllers
+import java.time.LocalDate
+import java.time.Month
 import java.util.*
+import java.time.format.DateTimeFormatter
 
 
 fun main() {
     val sc: Scanner = obrimScanner()
 
     //Definim preu
-    var preu=preu(sc, "Escriu el preu: ")
+    val preu=preu(sc, "Escriu el preu: ")
 
     //Demanem Data
-    val(dia, mes, any)= data(sc)
+    val data= data(sc)
 
     //demanem el tipus d'IVA
-    var tipusIva= tipusIva()
+    val tipusIva= tipusIva()
 
     //resultat amb el calcul de l'IVA
-    var resultat = calculIva(dia, mes, any, preu, tipusIva)
+    val resultat = calculIva(data preu, tipusIva)
 
     //si ek resultat no es null, imprimim el resultat amb l'IVA
     if (resultat != null) println("El preu final amb l'IVA és de: $resultat")
@@ -42,7 +45,7 @@ fun obrimScanner(): Scanner {
 fun preu(sc:Scanner, msg:String): Float{
     print(msg)
 
-    var num:Float
+    val num:Float
     num=sc.nextFloat()
     return num
 }
@@ -53,15 +56,13 @@ fun preu(sc:Scanner, msg:String): Float{
  * @param sc per escanejar el numero
  * @return un triple que conte el dia, el mes i l'any
  */
-fun data(sc:Scanner):Triple<Int, Int, Int> {
-    print("Escriu el dia de la compra: ")
-    var dia=sc.nextInt()
-    print("Escriu el mes de la compra: ")
-    var mes=sc.nextInt()
-    print("Escriu l'any de la compra: ")
-    var any=sc.nextInt()
-    sc.nextLine()
-    return Triple(dia,mes,any)
+fun data(sc:Scanner): LocalDate{
+    print("Escriu la data de la compra: ")
+    val dataString = sc.nextLine()
+    val formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")//format correcte
+    val data= LocalDate.parse(dataString, formatter)//convertim la string a una localdate
+
+    return data
 }
 
 /**
@@ -74,40 +75,25 @@ fun data(sc:Scanner):Triple<Int, Int, Int> {
 fun tipusIva(): String {
     val sc:Scanner=Scanner(System.`in`)
     println("Escriu quin tipus d'Iva escolliras : General, Reduit, Superreduit, Exempt")
-    return sc.next().lowercase()
+
+    var ivaEscollir=sc.next()
+    return ivaEscollir.lowercase()
 }
 
-/**
- * Funcio per a calcular is es un any de Traspas o no. Ja que desde el 1986 tenim 10 opcions on febrer tindra 29 dies i no 28
- * @author Catalina
- *
- * @param any per veure si es o no de traspas
- * @return tornara un boolean que dira si es o no un any de traspas
- *
- */
-fun anyTraspàs(any:Int): Boolean {
-    var anyTraspas=false
-    if(any %4 ==0 && any%100 !=0 && any%400==0){
-        anyTraspas=true
-    }
-    return anyTraspas
-}
 /**
  *  Funció per a validar la data. Es a dir, mirem de que els dies corresponguin amb els mesos
  *  @author Catalina
  *
- *  @param dia
- *  @param mes
- *  @param any
+ *  @param data
  *
  *  @return un boolean que ens dirà si la data existeix o no
  */
-fun validemData(dia:Int, mes:Int, any:Int):Boolean {
+fun validemData(data: LocalDate):Boolean {
     var dataValida=false
-     when (mes) {
-        2 -> dia <= if (anyTraspàs(any)) 29 else 28
-        4, 6, 9, 11 -> dia <= 30
-        else -> dia <= 31
+     when (data.month) {
+         Month.FEBRUARY <= 28
+         Month.APRIL,  Month.JUNE,  Month.SEPTEMBER,  Month.NOVEMBER -> data.dayOfYear  <= 30
+        else -> data.dayOfYear  <= 31
     }
     return dataValida
 }
@@ -119,50 +105,55 @@ fun validemData(dia:Int, mes:Int, any:Int):Boolean {
  * @param any
  * @param tipusIva
  */
-fun obtenimPocentatge(any:Int, tipusIva:String): Float? {
-    return when (any) {
-        in 1986..1992 -> when (tipusIva) {
-            "general" -> 0.12f
-            "reduida" -> 0.06f
+fun obtenimPocentatge(data:LocalDate, tipusIva:String): Float? {
+    return when (data.year) {
+        //12
+        in 1986 until 1992 -> when (tipusIva) {
+            "general" -> 1.12f
+            "reduida" -> 1.06f
+            else -> null
+        }
+        //15
+        in 1992..1994 -> when (tipusIva) {
+            "general" -> 1.15f
+            "reduida" -> 1.06f
+            "superreduida" -> 1.03f
             else -> null
         }
 
-        in 1993..1995 -> when (tipusIva) {
-            "general" -> 0.15f
-            "reduida" -> 0.06f
-            "superreduida" -> 0.03f
-            else -> null
-        }
-
-        in 1996..2010 -> when (tipusIva) {
-            "general" -> 0.16f
-            "reduida" -> 0.07f
-            "superreduida" -> 0.04f
+        in 1995..2009 -> when (tipusIva) {
+            "general" -> 1.16f
+            "reduida" -> 1.07f
+            "superreduida" -> 1.04f
             else -> null
         }
 
         in 2010..2012 -> when (tipusIva) {
-            "general" -> 0.18f
-            "reduida" -> 0.08f
-            "superreduida" -> 0.04f
+
+            "general" -> 1.18f
+            "reduida" -> 1.08f
+            "superreduida" -> 1.04f
             else -> null
         }
 
         in 2012..Int.MAX_VALUE -> when (tipusIva) {
-            "general" -> 0.21f
-            "reduida" -> 0.10f
-            "superreduida" -> 0.04f
-            else -> null
+            if (data.dayOfYear > 15 && data.month >   ) {
+                "general" -> 1.21f
+                "reduida" -> 1.10f
+                "superreduida" -> 1.04f
+                else -> null
+            }
         }
 
         else -> null
     }
 }
 
-fun calculIva(dia:Int, mes:Int, any:Int, preu:Float, tipusIva: String): Float? {
-    if(validemData(dia,mes,any)) return null
-    var porcentatgeIva= obtenimPocentatge(any, tipusIva) ?: return null
-    return preu*(1+porcentatgeIva)
+fun calculIva(data: LocalDate, preu:Float, tipusIva: String): Float? {
+    if(validemData(data.dayOfMonth ,data.month,data.year)) return null
+    var porcentatgeIva= obtenimPocentatge(data.year, tipusIva) ?: return null
+    var calcul=preu*porcentatgeIva
+    return calcul
 }
 
 fun finalscan(sc: Scanner) {
