@@ -1,4 +1,6 @@
 package org.example.controllers
+import controllers.ex2.abrirScanner
+import controllers.ex2.cerrarScanner
 import java.time.LocalDate
 import java.time.Month
 import java.util.*
@@ -6,7 +8,7 @@ import java.time.format.DateTimeFormatter
 
 
 fun main() {
-    val sc: Scanner = obrimScanner()
+    val sc: Scanner = abrirScanner()
 
     //Definim preu
     val preu=preu(sc, "Escriu el preu: ")
@@ -23,7 +25,7 @@ fun main() {
 
     println("El resultat es de: $resultat")
 
-    var tanquemScan= finalscan(sc)
+    cerrarScanner(sc)
 
 
 
