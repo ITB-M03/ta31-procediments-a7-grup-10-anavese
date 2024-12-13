@@ -10,6 +10,7 @@ fun main() {
 
     //Definim preu
     val preu=preu(sc, "Escriu el preu: ")
+    sc.nextLine()
 
     //Demanem Data
     val data= data(sc)
@@ -18,12 +19,9 @@ fun main() {
     val tipusIva= tipusIva()
 
     //resultat amb el calcul de l'IVA
-    val resultat = calculIva(data preu, tipusIva)
+    val resultat = calculIva(data, preu, tipusIva)
 
-    //si ek resultat no es null, imprimim el resultat amb l'IVA
-    if (resultat != null) println("El preu final amb l'IVA és de: $resultat")
-    //si esnullm imprimim que el resultat no es valid
-    else println("El resultat es de: $preu")
+    println("El resultat es de: $resultat")
 
     var tanquemScan= finalscan(sc)
 
@@ -61,7 +59,6 @@ fun data(sc:Scanner): LocalDate{
     val dataString = sc.nextLine()
     val formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")//format correcte
     val data= LocalDate.parse(dataString, formatter)//convertim la string a una localdate
-
     return data
 }
 
@@ -81,77 +78,75 @@ fun tipusIva(): String {
 }
 
 /**
- *  Funció per a validar la data. Es a dir, mirem de que els dies corresponguin amb els mesos
- *  @author Catalina
- *
- *  @param data
- *
- *  @return un boolean que ens dirà si la data existeix o no
- */
-fun validemData(data: LocalDate):Boolean {
-    var dataValida=false
-     when (data.month) {
-         Month.FEBRUARY <= 28
-         Month.APRIL,  Month.JUNE,  Month.SEPTEMBER,  Month.NOVEMBER -> data.dayOfYear  <= 30
-        else -> data.dayOfYear  <= 31
-    }
-    return dataValida
-}
-
-/**
  * Funció per a calcular els Ivas
  * @author Catalina
  *
- * @param any
- * @param tipusIva
+ * @param any que és l'any de la compra
+ * @param tipusIva que és el tipus d'IVA que escollirem
+ *
+ * @return el porcentatge
  */
-fun obtenimPocentatge(data:LocalDate, tipusIva:String): Float? {
-    return when (data.year) {
+fun obtenimPocentatge(data:LocalDate, tipusIva:String): Float {
+    var any= data.year
+    return when (any) {
         //12
         in 1986 until 1992 -> when (tipusIva) {
             "general" -> 1.12f
-            "reduida" -> 1.06f
-            else -> null
+            "reduit" -> 1.06f
+            else -> 1f
         }
         //15
         in 1992..1994 -> when (tipusIva) {
             "general" -> 1.15f
-            "reduida" -> 1.06f
-            "superreduida" -> 1.03f
-            else -> null
+            "reduit" -> 1.06f
+            "superreduit" -> 1.03f
+            else -> 1f
         }
 
         in 1995..2009 -> when (tipusIva) {
             "general" -> 1.16f
-            "reduida" -> 1.07f
-            "superreduida" -> 1.04f
-            else -> null
+            "reduit" -> 1.07f
+            "superreduit" -> 1.04f
+            else -> 1f
         }
 
         in 2010..2012 -> when (tipusIva) {
 
             "general" -> 1.18f
-            "reduida" -> 1.08f
-            "superreduida" -> 1.04f
-            else -> null
+            "reduit" -> 1.08f
+            "superreduit" -> 1.04f
+            else -> 1.0f
         }
 
         in 2012..Int.MAX_VALUE -> when (tipusIva) {
-            if (data.dayOfYear > 15 && data.month >   ) {
-                "general" -> 1.21f
-                "reduida" -> 1.10f
-                "superreduida" -> 1.04f
-                else -> null
+            "general" -> {
+                if (data.dayOfYear < 15 && data.month == Month.JULY && data.year ==2012 ) 1.18f
+                else 1.21f
             }
+            "reduit" -> {
+                if (data.dayOfYear > 15 && data.month >= Month.JULY && data.year ==2012 ) 1.08f
+                else 1.10f
+            }
+            "superreduit" -> 1.04f
+            else -> 1.0f
         }
-
-        else -> null
+        else -> 1.0f
     }
-}
+ }
 
-fun calculIva(data: LocalDate, preu:Float, tipusIva: String): Float? {
-    if(validemData(data.dayOfMonth ,data.month,data.year)) return null
-    var porcentatgeIva= obtenimPocentatge(data.year, tipusIva) ?: return null
+/**
+ * @author Catalina
+ *
+ * @param data amb la data de la compra
+ * @param preu amb el cost de la compra
+ * @param tipusIva amb els tipus d'IVA que podem escollir
+ *
+ * @return el preu final amb l'IVA calculat
+ *
+ */
+
+fun calculIva(data: LocalDate, preu:Float, tipusIva: String): Float {
+    var porcentatgeIva= obtenimPocentatge(data, tipusIva)
     var calcul=preu*porcentatgeIva
     return calcul
 }
